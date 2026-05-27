@@ -361,6 +361,7 @@ DateTimePatternGenerator::DateTimePatternGenerator(const DateTimePatternGenerato
     patternMap = new PatternMap();
     if (fp == nullptr || dtMatcher == nullptr || distanceInfo == nullptr || patternMap == nullptr) {
         internalErrorCode = U_MEMORY_ALLOCATION_ERROR;
+        return;
     }
     *this=other;
 }
