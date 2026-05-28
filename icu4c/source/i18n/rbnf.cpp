@@ -943,6 +943,11 @@ RuleBasedNumberFormat::getRuleSetDisplayName(int32_t index, const Locale& locale
         UnicodeString localeName(localeParam.getBaseName(), -1, UnicodeString::kInvariant); 
         int32_t len = localeName.length();
         char16_t* localeStr = localeName.getBuffer(len + 1);
+        if (localeStr == nullptr) {
+            UnicodeString bogus;
+            bogus.setToBogus();
+            return bogus;
+        }
         while (len >= 0) {
             localeStr[len] = 0;
             int32_t ix = localizations->indexForLocale(localeStr);
