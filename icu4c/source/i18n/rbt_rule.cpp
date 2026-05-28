@@ -167,7 +167,9 @@ TransliterationRule::TransliterationRule(TransliterationRule& other) :
         data(other.data) {
     if (other.segmentsCount > 0) {
         segments = static_cast<UnicodeFunctor**>(uprv_malloc(other.segmentsCount * sizeof(UnicodeFunctor*)));
-        uprv_memcpy(segments, other.segments, (size_t)other.segmentsCount*sizeof(segments[0]));
+        if (segments != nullptr) {
+            uprv_memcpy(segments, other.segments, (size_t)other.segmentsCount*sizeof(segments[0]));
+        }
     }
 
     if (other.anteContext != nullptr) {
