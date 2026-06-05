@@ -332,7 +332,7 @@ DateTimePatternGenerator::createEmptyInstance(UErrorCode& status) {
     return U_SUCCESS(status) ? result.orphan() : nullptr;
 }
 
-DateTimePatternGenerator::DateTimePatternGenerator(UErrorCode &status) :
+DateTimePatternGenerator::DateTimePatternGenerator() :
     UObject()
 {
     emptyString.getTerminatedBuffer();
@@ -341,7 +341,15 @@ DateTimePatternGenerator::DateTimePatternGenerator(UErrorCode &status) :
     distanceInfo = new DistanceInfo();
     patternMap = new PatternMap();
     if (fp == nullptr || dtMatcher == nullptr || distanceInfo == nullptr || patternMap == nullptr) {
-        internalErrorCode = status = U_MEMORY_ALLOCATION_ERROR;
+        internalErrorCode = U_MEMORY_ALLOCATION_ERROR;
+    }
+}
+
+DateTimePatternGenerator::DateTimePatternGenerator(UErrorCode &status) :
+    DateTimePatternGenerator()
+{
+    if (U_FAILURE(internalErrorCode)) {
+        status = internalErrorCode;
     }
 }
 
@@ -352,24 +360,35 @@ DateTimePatternGenerator::DateTimePatternGenerator(const Locale& locale, UErrorC
 }
 
 DateTimePatternGenerator::DateTimePatternGenerator(const DateTimePatternGenerator& other) :
-    UObject()
+    DateTimePatternGenerator()
 {
-    emptyString.getTerminatedBuffer();
-    fp = new FormatParser();
-    dtMatcher = new DateTimeMatcher();
-    distanceInfo = new DistanceInfo();
-    patternMap = new PatternMap();
-    if (fp == nullptr || dtMatcher == nullptr || distanceInfo == nullptr || patternMap == nullptr) {
-        internalErrorCode = U_MEMORY_ALLOCATION_ERROR;
-        return;
-    }
-    *this=other;
+    *this = other;
 }
 
 DateTimePatternGenerator&
 DateTimePatternGenerator::operator=(const DateTimePatternGenerator& other) {
     // reflexive case
     if (&other == this) {
+        return *this;
+    }
+    // Heal a previously-broken object: if any of the core helpers are missing
+    // (e.g. from a prior OOM during construction), try to allocate them now.
+    // If (re)allocation still fails, leave internalErrorCode set and bail out
+    // without dereferencing null pointers below.
+    if (fp == nullptr) {
+        fp = new FormatParser();
+    }
+    if (dtMatcher == nullptr) {
+        dtMatcher = new DateTimeMatcher();
+    }
+    if (distanceInfo == nullptr) {
+        distanceInfo = new DistanceInfo();
+    }
+    if (patternMap == nullptr) {
+        patternMap = new PatternMap();
+    }
+    if (fp == nullptr || dtMatcher == nullptr || distanceInfo == nullptr || patternMap == nullptr) {
+        internalErrorCode = U_MEMORY_ALLOCATION_ERROR;
         return *this;
     }
     internalErrorCode = other.internalErrorCode;
