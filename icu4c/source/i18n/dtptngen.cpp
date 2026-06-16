@@ -348,7 +348,7 @@ DateTimePatternGenerator::DateTimePatternGenerator() :
 DateTimePatternGenerator::DateTimePatternGenerator(UErrorCode &status) :
     DateTimePatternGenerator()
 {
-    if (U_FAILURE(internalErrorCode)) {
+    if (U_FAILURE(internalErrorCode) && U_SUCCESS(status)) {
         status = internalErrorCode;
     }
 }
@@ -371,6 +371,14 @@ DateTimePatternGenerator::operator=(const DateTimePatternGenerator& other) {
     if (&other == this) {
         return *this;
     }
+    // Don't try to copy a broken source object: bail out cleanly instead of
+    // crashing on `*fp = *(other.fp);` etc., and avoid falsely "healing" by
+    // copying a failed internalErrorCode below.
+    if (U_FAILURE(other.internalErrorCode)) {
+        return *this;
+    }
+
+
     // Heal a previously-broken object: if any of the core helpers are missing
     // (e.g. from a prior OOM during construction), try to allocate them now.
     // If (re)allocation still fails, leave internalErrorCode set and bail out
